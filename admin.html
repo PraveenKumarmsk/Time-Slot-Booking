@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Booking System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, var(--dark-color) 0%, #343a40 100%);
+            color: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .admin-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .control-btn:hover {
+            background: var(--light-gray);
+        }
+        
+        .control-btn.primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .control-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .bookings-table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .bookings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .bookings-table th {
+            background: var(--light-gray);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .bookings-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .bookings-table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .no-bookings {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-color);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: var(--gray-color);
+            font-size: 0.9rem;
+        }
+        
+        .date-filter {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        @media (max-width: 768px) {
+            .bookings-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .admin-controls {
+                flex-direction: column;
+            }
+            
+            .date-filter {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="admin-header">
+            <div>
+                <h1><i class="fas fa-user-shield"></i> Admin Panel</h1>
+                <p>Manage and view all bookings</p>
+            </div>
+            <a href="index.html" class="control-btn">
+                <i class="fas fa-arrow-left"></i> Back to Booking
+            </a>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-card">
+                <i class="fas fa-calendar-check fa-2x" style="color: var(--primary-color);"></i>
+                <div class="stat-value" id="total-bookings">0</div>
+                <div class="stat-label">Total Bookings</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-calendar-day fa-2x" style="color: var(--success-color);"></i>
+                <div class="stat-value" id="today-bookings">0</div>
+                <div class="stat-label">Today's Bookings</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-users fa-2x" style="color: var(--secondary-color);"></i>
+                <div class="stat-value" id="unique-customers">0</div>
+                <div class="stat-label">Unique Customers</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-chart-pie fa-2x" style="color: var(--danger-color);"></i>
+                <div class="stat-value" id="most-popular-test">A</div>
+                <div class="stat-label">Most Popular Test</div>
+            </div>
+        </div>
+        
+        <div class="admin-controls">
+            <button class="control-btn primary" id="refresh-btn">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+            <div class="date-filter">
+                <label>Filter by Date:</label>
+                <input type="date" id="filter-date">
+                <button class="control-btn" id="clear-filter">
+                    <i class="fas fa-times"></i> Clear
+                </button>
+            </div>
+            <button class="control-btn" id="export-btn">
+                <i class="fas fa-download"></i> Export to CSV
+            </button>
+        </div>
+        
+        <div class="bookings-table-container">
+            <table class="bookings-table">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Name</th>
+                        <th>Date</th>
+                        <th>Time Slot</th>
+                        <th>Test Type</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="bookings-table-body">
+                    <tr>
+                        <td colspan="8" class="no-bookings">
+                            <i class="fas fa-spinner fa-spin"></i> Loading bookings...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <footer>
+            <p>© 2023 Time Slot Booking System - Admin Panel</p>
+            <p>Data is stored securely in Google Sheets</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Google Apps Script Web App URL (same as main page)
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/u/0/home/projects/1z9W2cHF7Iolkkos_7shhQWmETZVcTATWNqyDzo_1MqnKaqn581vWdT3z/edit';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load bookings
+            loadBookings();
+            
+            // Set up event listeners
+            document.getElementById('refresh-btn').addEventListener('click', loadBookings);
+            document.getElementById('filter-date').addEventListener('change', filterByDate);
+            document.getElementById('clear-filter').addEventListener('click', clearFilter);
+            document.getElementById('export-btn').addEventListener('click', exportToCSV);
+            
+            // Set filter date to today by default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filter-date').value = today;
+        });
+        
+        // Load bookings from Google Sheets
+        async function loadBookings() {
+            const tableBody = document.getElementById('bookings-table-body');
+            
+            try {
+                // In a real implementation, you would fetch from Google Sheets
+                // For demonstration, we'll use mock data
+                const mockBookings = generateMockBookings();
+                
+                // Update stats
+                updateStats(mockBookings);
+                
+                // Populate table
+                populateBookingsTable(mockBookings);
+                
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="no-bookings">
+                            <i class="fas fa-exclamation-triangle"></i> Error loading bookings. Please try again.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // Populate bookings table
+        function populateBookingsTable(bookings) {
+            const tableBody = document.getElementById('bookings-table-body');
+            
+            if (bookings.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="no-bookings">
+                            <i class="fas fa-calendar-times"></i> No bookings found.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let tableHTML = '';
+            
+            bookings.forEach(booking => {
+                // Format date
+                const bookingDate = new Date(booking.date);
+                const formattedDate = bookingDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                // Generate a booking ID
+                const bookingId = `BK${bookingDate.getFullYear()}${(bookingDate.getMonth()+1).toString().padStart(2, '0')}${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`;
+                
+                tableHTML += `
+                    <tr>
+                        <td>${bookingId}</td>
+                        <td>${booking.name}</td>
+                        <td>${formattedDate}</td>
+                        <td>${booking.timeSlot}</td>
+                        <td>Test Type ${booking.testType}</td>
+                        <td>${booking.phone}</td>
+                        <td><span class="status-badge status-confirmed">Confirmed</span></td>
+                        <td>
+                            <button class="control-btn" style="padding: 5px 10px; font-size: 0.9rem;" onclick="viewBooking('${bookingId}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = tableHTML;
+        }
+        
+        // Update statistics
+        function updateStats(bookings) {
+            // Total bookings
+            document.getElementById('total-bookings').textContent = bookings.length;
+            
+            // Today's bookings
+            const today = new Date().toISOString().split('T')[0];
+            const todayBookings = bookings.filter(b => b.date === today).length;
+            document.getElementById('today-bookings').textContent = todayBookings;
+            
+            // Unique customers (by phone)
+            const uniquePhones = [...new Set(bookings.map(b => b.phone))];
+            document.getElementById('unique-customers').textContent = uniquePhones.length;
+            
+            // Most popular test type
+            const testCounts = {};
+            bookings.forEach(b => {
+                testCounts[b.testType] = (testCounts[b.testType] || 0) + 1;
+            });
+            
+            let mostPopular = 'A';
+            let maxCount = 0;
+            for (const testType in testCounts) {
+                if (testCounts[testType] > maxCount) {
+                    maxCount = testCounts[testType];
+                    mostPopular = testType;
+                }
+            }
+            
+            document.getElementById('most-popular-test').textContent = mostPopular;
+        }
+        
+        // Filter bookings by date
+        function filterByDate() {
+            const filterDate = document.getElementById('filter-date').value;
+            // In a real implementation, you would fetch filtered data from Google Sheets
+            // For now, we'll just reload all bookings (filtering would be done server-side)
+            loadBookings();
+        }
+        
+        // Clear date filter
+        function clearFilter() {
+            document.getElementById('filter-date').value = '';
+            loadBookings();
+        }
+        
+        // Export to CSV
+        function exportToCSV() {
+            alert('In a real implementation, this would export all bookings to a CSV file.');
+            // This would typically make a request to Google Apps Script to generate a CSV
+        }
+        
+        // View booking details
+        function viewBooking(bookingId) {
+            alert(`Viewing booking details for: ${bookingId}\n\nIn a real implementation, this would show full booking details.`);
+        }
+        
+        // Generate mock bookings for demonstration
+        function generateMockBookings() {
+            const names = ['John Smith', 'Emma Johnson', 'Michael Brown', 'Sarah Davis', 'Robert Wilson', 
+                          'Lisa Miller', 'David Moore', 'Jennifer Taylor', 'James Anderson', 'Maria Thomas'];
+            
+            const addresses = ['123 Main St', '456 Oak Ave', '789 Pine Rd', '321 Elm St', '654 Maple Ave'];
+            
+            const bookings = [];
+            const today = new Date();
+            
+            for (let i = 0; i < 15; i++) {
+                // Create dates: some in the past, some today, some in the future
+                const dateOffset = Math.floor(Math.random() * 10) - 3; // -3 to +6 days
+                const bookingDate = new Date(today);
+                bookingDate.setDate(today.getDate() + dateOffset);
+                const dateStr = bookingDate.toISOString().split('T')[0];
+                
+                // Generate time slots (8:00 AM to 6:00 PM, 40-minute intervals)
+                const hour = 8 + Math.floor(Math.random() * 10);
+                const minutes = Math.random() > 0.5 ? '00' : '40';
+                const endHour = minutes === '40' ? hour + 1 : hour;
+                const endMinutes = minutes === '00' ? '40' : '20';
+                const timeSlot = `${hour.toString().padStart(2, '0')}:${minutes} - ${endHour.toString().padStart(2, '0')}:${endMinutes}`;
+                
+                bookings.push({
+                    name: names[Math.floor(Math.random() * names.length)],
+                    address: addresses[Math.floor(Math.random() * addresses.length)] + ', City, State 12345',
+                    phone: `+1 (555) ${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`,
+                    date: dateStr,
+                    day: bookingDate.toLocaleDateString('en-US', { weekday: 'long' }),
+                    timeSlot: timeSlot,
+                    testType: ['A', 'B', 'C'][Math.floor(Math.random() * 3)],
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
+            // Sort by date (newest first)
+            return bookings.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+    </script>
+</body>
+</html>
